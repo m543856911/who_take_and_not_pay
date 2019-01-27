@@ -99,6 +99,7 @@ class shelves():
                         other_lost_goods, o_critical = self.get_lost(target, lost_count - i, lost_value - price * i, limit=10)
                     else:
                         lost_good_list.append(lost_good)
+                        break
 
                     # print(lost_count - i)
                     if critical - o_critical == 1:
@@ -216,6 +217,7 @@ def get_lost(sold_goods, lost_count, lost_value, limit=10):
                     other_lost_goods, o_critical = get_lost(target, lost_count - i, lost_value - price * i, limit=10)
                 else:
                     lost_good_list.append(lost_good)
+                    break
 
                 # print(lost_count - i)
                 if critical - o_critical == 1:
