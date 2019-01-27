@@ -6,6 +6,11 @@ import dateutil
 import datetime
 
 class shelves():
+    ###
+    # 读取全部销售相关记录，并进行查找和计算
+    # 所有货架主键为货架id
+    # 可以以id为基础，查找销售，上架，检查列表数据
+    # get_lost函数使用递归方法求解所有可能组合
     def __init__(self):
         PATH = r'../阳光乐选/订单明细_上海.xlsx'
         self.sales_list = (pd.read_excel(PATH)).fillna(method='ffill')
@@ -19,6 +24,8 @@ class shelves():
         self.check_list = (pd.read_excel(PATH)).fillna(method='ffill')
 
     def read_sales(self, target_id, good_name=False, start=False, end=False):
+        # 额外支持查询相应商品和时间段销售记录
+
         target = self.sales_list[self.sales_list['货架编号'] == target_id]
         if good_name:
             target = target[target['商品明细'] == good_name]
@@ -29,7 +36,14 @@ class shelves():
 
         return target.reset_index(drop=True)
 
+    def get_corp_name(self, target_id):
+        target_list = self.read_sales(self.sales_list, target_id)
+        target_corp = target_list['店铺名称'].iloc[0]
+        return target_corp
+
     def read_check(self, target_id):
+        # 检查表主键为公司名，需额外进行一步转换
+
         target_corp = self.get_corp_name(target_id)
 
         target = self.check_list[self.check_list['店铺名称'] == target_corp]
@@ -116,16 +130,12 @@ class shelves():
 
         return lost_good_list, critical
 
-    def get_corp_name(self, target_id):
-        target_list = self.read_sales(self.sales_list, target_id)
-        target_corp = target_list['店铺名称'].iloc[0]
-        return target_corp
 
     def get_lost_by_check(self, target_id):
         target = self.read_check(target_id)
 
         for i in range(target.shape[0] - 1, 0, -1):
-            print('****************************************')
+            #print('****************************************')
             start_time = target['时间'].iloc[i]
             end_time = target['时间'].iloc[i - 1]
             delta = dateutil.relativedelta.relativedelta(days=5)
@@ -135,7 +145,7 @@ class shelves():
             sold_value = round(float(sales['金额'].sum()), 2)
 
             start_time = str(parse(str(start_time)) - delta)
-            print(start_time, end_time)
+            #print(start_time, end_time)
             sales = self.read_sales(shelve_id=target_id, start=start_time, end=end_time)
             sold_goods = []
             for good, group in sales.groupby(['商品明细']):
@@ -153,15 +163,15 @@ class shelves():
             lost_value = round(last_time_value - now_value - sold_value, 2)
 
             if lost_count > 0 and lost_value < 0.3 * sold_value:
-                print(lost_count, lost_value)
-                starttime = datetime.datetime.now()
+                #print(lost_count, lost_value)
+                #starttime = datetime.datetime.now()
                 lost_good = self.get_lost(sold_goods, lost_count, lost_value)[0]
-                endtime = datetime.datetime.now()
+                #endtime = datetime.datetime.now()
                 # print(target.iloc[i-1])
-                print(endtime - starttime)
-                print(len(lost_good))
-                print(lost_good[:3])
-
+                #print(endtime - starttime)
+                #print(len(lost_good))
+                #print(lost_good[:3])
+        return lost_good
 
 def get_lost(sold_goods, lost_count, lost_value, limit=10):
     lost_good_list = []
